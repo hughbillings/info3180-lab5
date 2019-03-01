@@ -39,46 +39,25 @@ def secure_page():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        # if user is already logged in, just redirect them to our secure page
-        # or some other page like a dashboard
         return redirect(url_for('secure_page'))
 
-    # Here we use a class of some kind to represent and validate our
-    # client-side form data. For example, WTForms is a library that will
-    # handle this for us, and we use a custom LoginForm to validate.
-    form = LoginForm()
-    # Login and validate the user.
+    form=LoginForm()
     if request.method == 'POST' and form.validate_on_submit():
-        # Query our database to see if the username and password entered
-        # match a user that is in the database.
         username = form.username.data
         password = form.password.data
-
-        # user = UserProfile.query.filter_by(username=username, password=password)\
-        # .first()
-        # or
         user = UserProfile.query.filter_by(username=username).first()
-
+        print(user)
         if user is not None and check_password_hash(user.password, password):
-            remember_me = False
-
-            if 'remember_me' in request.form:
-                remember_me = True
-
-            # If the user is not blank, meaning if a user was actually found,
-            # then login the user and create the user session.
-            # user should be an instance of your `User` class
-            login_user(user, remember=remember_me)
-
+            login_user(user)
             flash('Logged in successfully.', 'success')
-
-            next_page = request.args.get('next')
-            return redirect(next_page or url_for('home'))
+            return render_template('secure_page.html')
         else:
             flash('Username or Password is incorrect.', 'danger')
-
-    flash_errors(form)
-    return render_template('login.html', form=form)
+            return render_template('login.html', form=form)
+        flash('Logged in Successfully','success')
+        return render_template('secure_page.html')
+    else:
+        return render_template("login.html",form=form)
 
 
 @app.route("/logout")
@@ -87,7 +66,7 @@ def logout():
     # Logout the user and end the session
     logout_user()
     flash('You have been logged out.', 'danger')
-    return redirect(url_for('home'))
+    return render_template('home.html')
 
 
 @login_manager.user_loader
